@@ -21,9 +21,9 @@ const Job = ({ job }) => {
                 <p className="text-sm text-gray-500">
                     {daysAgoFunction(job?.createdAt) === 0 ? "Hôm nay" : `${daysAgoFunction(job?.createdAt)} ngày trước`}
                 </p>
-                <Button variant="outline" className="p-2 rounded-full hover:bg-gray-100 transition-all">
+                {/* <Button variant="outline" className="p-2 rounded-full hover:bg-gray-100 transition-all">
                     <Bookmark className="text-gray-500" />
-                </Button>
+                </Button> */}
             </div>
 
             <div className="flex items-center gap-4 my-4">

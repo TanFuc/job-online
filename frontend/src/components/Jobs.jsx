@@ -7,28 +7,23 @@ import { motion } from 'framer-motion';
 
 const Jobs = () => {
     const { allJobs, searchedQuery } = useSelector(store => store.job);
-    const [filterJobs, setFilterJobs] = useState([]);
+    const [filterJobs, setFilterJobs] = useState(allJobs);
 
     useEffect(() => {
-        // Đảm bảo searchedQuery là chuỗi
-        const query = String(searchedQuery || '').toLowerCase();
-
-        if (query.trim()) {
+        if (searchedQuery && (searchedQuery.location || searchedQuery.field)) {
             const filteredJobs = allJobs.filter((job) => {
-                const title = String(job?.title || '').toLowerCase();
-                const description = String(job?.description || '').toLowerCase();
-                const location = String(job?.location || '').toLowerCase();
+                const locationMatch = searchedQuery.location
+                    ? job.location.toLowerCase().includes(searchedQuery.location.toLowerCase())
+                    : true;
 
-                return (
-                    title.includes(query) ||
-                    description.includes(query) ||
-                    location.includes(query)
-                );
+                const fieldMatch = searchedQuery.field
+                    ? job.title.toLowerCase().includes(searchedQuery.field.toLowerCase())
+                    : true;
+
+                return locationMatch && fieldMatch;
             });
-
             setFilterJobs(filteredJobs);
         } else {
-            // Nếu không có query thì hiển thị toàn bộ job
             setFilterJobs(allJobs);
         }
     }, [allJobs, searchedQuery]);
@@ -41,25 +36,29 @@ const Jobs = () => {
                     <div className='w-[20%]'>
                         <FilterCard />
                     </div>
-                    {filterJobs.length <= 0 ? (
-                        <span>Job not found</span>
-                    ) : (
-                        <div className='flex-1 h-[88vh] overflow-y-auto pb-5'>
-                            <div className='grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4'>
-                                {filterJobs.map((job) => (
-                                    <motion.div
-                                        key={job?._id}
-                                        initial={{ opacity: 0, x: 100 }}
-                                        animate={{ opacity: 1, x: 0 }}
-                                        exit={{ opacity: 0, x: -100 }}
-                                        transition={{ duration: 0.3 }}
-                                    >
-                                        <Job job={job} />
-                                    </motion.div>
-                                ))}
+                    {
+                        filterJobs.length <= 0 ? (
+                            <span>Job not found</span>
+                        ) : (
+                            <div className='flex-1 h-[88vh] overflow-y-auto pb-5'>
+                                <div className='grid grid-cols-3 gap-4'>
+                                    {
+                                        filterJobs.map((job) => (
+                                            <motion.div
+                                                initial={{ opacity: 0, x: 100 }}
+                                                animate={{ opacity: 1, x: 0 }}
+                                                exit={{ opacity: 0, x: -100 }}
+                                                transition={{ duration: 0.3 }}
+                                                key={job?._id}
+                                            >
+                                                <Job job={job} />
+                                            </motion.div>
+                                        ))
+                                    }
+                                </div>
                             </div>
-                        </div>
-                    )}
+                        )
+                    }
                 </div>
             </div>
         </div>

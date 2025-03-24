@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="container mx-auto px-6 flex flex-col md:flex-row justify-between items-center">
         {/* Thông tin công ty */}
         <div className="text-center md:text-left mb-4 md:mb-0">
-          <h3 className="text-xl font-semibold text-white hover:text-gray-200 transition-all">Job Hunt</h3>
+          <h3 className="text-xl font-semibold text-white hover:text-gray-200 transition-all">FishJob</h3>
         </div>
 
         {/* Liên kết nhanh */}
