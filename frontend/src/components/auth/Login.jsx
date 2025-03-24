@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../shared/Navbar';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -12,23 +12,40 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setLoading, setUser } from '@/redux/authSlice';
 import { Loader2 } from 'lucide-react';
 
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as yup from 'yup';
+
+// Schema validation với Yup
+const loginSchema = yup.object().shape({
+    email: yup.string().email("Email không hợp lệ").required("Email không được để trống"),
+    password: yup.string().required("Mật khẩu không được để trống"),
+    role: yup.string().oneOf(['student', 'recruiter'], "Vai trò không hợp lệ"),
+});
+
 const Login = () => {
-    const [input, setInput] = useState({ email: "", password: "", role: "student" });
     const { loading, user } = useSelector((store) => store.auth);
     const navigate = useNavigate();
     const dispatch = useDispatch();
-    const [error, setError] = useState("");
 
-    const changeEventHandler = (e) => {
-        setInput({ ...input, [e.target.name]: e.target.value });
-    };
+    const {
+        register,
+        handleSubmit,
+        watch,
+        formState: { errors }
+    } = useForm({
+        resolver: yupResolver(loginSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+            role: 'student',
+        }
+    });
 
-    const submitHandler = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (data) => {
         try {
             dispatch(setLoading(true));
-            setError(""); // Reset error state
-            const res = await axios.post(`${USER_API_END_POINT}/login`, input, {
+            const res = await axios.post(`${USER_API_END_POINT}/login`, data, {
                 headers: { "Content-Type": "application/json" },
                 withCredentials: true,
             });
@@ -39,7 +56,6 @@ const Login = () => {
             }
         } catch (error) {
             console.log(error);
-            setError(error.response?.data?.message || "Đã có lỗi xảy ra");
             toast.error(error.response?.data?.message || "Đã có lỗi xảy ra");
         } finally {
             dispatch(setLoading(false));
@@ -56,39 +72,31 @@ const Login = () => {
         <div className="bg-gray-50 min-h-screen">
             <Navbar />
             <div className='flex items-center justify-center max-w-7xl mx-auto'>
-                <form onSubmit={submitHandler} className='w-full sm:w-96 border border-gray-300 rounded-lg p-8 my-10 shadow-xl bg-white'>
+                <form onSubmit={handleSubmit(onSubmit)} className='w-full sm:w-96 border border-gray-300 rounded-lg p-8 my-10 shadow-xl bg-white'>
                     <h1 className='font-bold text-2xl mb-6 text-gray-800 text-center'>Đăng nhập</h1>
 
-                    {/* Email input with icon */}
+                    {/* Email input */}
                     <div className='my-4'>
                         <Label>Email</Label>
-                        <div className="relative">
-                            <Input
-                                type="email"
-                                value={input.email}
-                                name="email"
-                                onChange={changeEventHandler}
-                                placeholder="tanphuc@gmail.com"
-                                className="w-full p-3 border rounded-md border-gray-300 focus:ring-2 focus:ring-purple-400"
-                            />
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></span>
-                        </div>
+                        <Input
+                            type="email"
+                            {...register("email")}
+                            placeholder="tanphuc@gmail.com"
+                            className="w-full p-3 border rounded-md border-gray-300 focus:ring-2 focus:ring-purple-400"
+                        />
+                        {errors.email && <p className="text-red-600 text-sm mt-1">{errors.email.message}</p>}
                     </div>
 
-                    {/* Password input with icon */}
+                    {/* Password input */}
                     <div className='my-4'>
                         <Label>Mật khẩu</Label>
-                        <div className="relative">
-                            <Input
-                                type="password"
-                                value={input.password}
-                                name="password"
-                                onChange={changeEventHandler}
-                                placeholder="********"
-                                className="w-full p-3 border rounded-md border-gray-300 focus:ring-2 focus:ring-purple-400"
-                            />
-                            <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></span>
-                        </div>
+                        <Input
+                            type="password"
+                            {...register("password")}
+                            placeholder="********"
+                            className="w-full p-3 border rounded-md border-gray-300 focus:ring-2 focus:ring-purple-400"
+                        />
+                        {errors.password && <p className="text-red-600 text-sm mt-1">{errors.password.message}</p>}
                     </div>
 
                     {/* Role selection */}
@@ -97,30 +105,26 @@ const Login = () => {
                             <div className="flex items-center space-x-2">
                                 <Input
                                     type="radio"
-                                    name="role"
                                     value="student"
-                                    checked={input.role === 'student'}
-                                    onChange={changeEventHandler}
+                                    {...register("role")}
+                                    checked={watch("role") === "student"}
                                     className="cursor-pointer"
                                 />
-                                <Label htmlFor="r1">Ứng viên</Label>
+                                <Label>Ứng viên</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Input
                                     type="radio"
-                                    name="role"
                                     value="recruiter"
-                                    checked={input.role === 'recruiter'}
-                                    onChange={changeEventHandler}
+                                    {...register("role")}
+                                    checked={watch("role") === "recruiter"}
                                     className="cursor-pointer"
                                 />
-                                <Label htmlFor="r2">Nhà tuyển dụng</Label>
+                                <Label>Nhà tuyển dụng</Label>
                             </div>
                         </RadioGroup>
+                        {errors.role && <p className="text-red-600 text-sm mt-1">{errors.role.message}</p>}
                     </div>
-
-                    {/* Display error message */}
-                    {error && <div className="text-red-600 text-sm mb-4">{error}</div>}
 
                     {/* Submit button */}
                     {loading ? (

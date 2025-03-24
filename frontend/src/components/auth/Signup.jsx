@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import Navbar from '../shared/Navbar';
 import { Label } from '../ui/label';
 import { Input } from '../ui/input';
@@ -12,38 +12,49 @@ import { useDispatch, useSelector } from 'react-redux';
 import { setLoading } from '@/redux/authSlice';
 import { Loader2 } from 'lucide-react';
 
+import { useForm } from 'react-hook-form';
+import { yupResolver } from '@hookform/resolvers/yup';
+import * as Yup from 'yup';
+
+// Schema validation với Yup
+const schema = Yup.object().shape({
+    fullname: Yup.string().required('Họ và tên không được để trống'),
+    email: Yup.string().email('Email không hợp lệ').required('Email không được để trống'),
+    phoneNumber: Yup.string()
+        .matches(/^[0-9]{10,11}$/, 'Số điện thoại phải từ 10-11 số')
+        .required('Số điện thoại không được để trống'),
+    password: Yup.string().min(6, 'Mật khẩu phải ít nhất 6 ký tự').required('Mật khẩu không được để trống'),
+    role: Yup.string().oneOf(['student', 'recruiter'], 'Vui lòng chọn vai trò').required('Vai trò là bắt buộc'),
+    file: Yup
+        .mixed()
+        .test('required', 'Ảnh đại diện là bắt buộc', (value) => value && value.length > 0)
+        .test('fileType', 'Chỉ chấp nhận ảnh (jpg, jpeg, png)', (value) => {
+            return value && ['image/jpeg', 'image/png', 'image/jpg'].includes(value[0]?.type);
+        })
+});
+
 const Signup = () => {
-    const [input, setInput] = useState({
-        fullname: "",
-        email: "",
-        phoneNumber: "",
-        password: "",
-        role: "",
-        file: ""
-    });
     const { loading, user } = useSelector(store => store.auth);
     const dispatch = useDispatch();
     const navigate = useNavigate();
 
-    const changeEventHandler = (e) => {
-        setInput({ ...input, [e.target.name]: e.target.value });
-    }
+    const {
+        register,
+        handleSubmit,
+        formState: { errors },
+        watch,
+    } = useForm({
+        resolver: yupResolver(schema),
+    });
 
-    const changeFileHandler = (e) => {
-        setInput({ ...input, file: e.target.files?.[0] });
-    }
-
-    const submitHandler = async (e) => {
-        e.preventDefault();
+    const onSubmit = async (data) => {
         const formData = new FormData();
-        formData.append("fullname", input.fullname);
-        formData.append("email", input.email);
-        formData.append("phoneNumber", input.phoneNumber);
-        formData.append("password", input.password);
-        formData.append("role", input.role);
-        if (input.file) {
-            formData.append("file", input.file);
-        }
+        formData.append("fullname", data.fullname);
+        formData.append("email", data.email);
+        formData.append("phoneNumber", data.phoneNumber);
+        formData.append("password", data.password);
+        formData.append("role", data.role);
+        formData.append("file", data.file[0]);
 
         try {
             dispatch(setLoading(true));
@@ -57,11 +68,11 @@ const Signup = () => {
             }
         } catch (error) {
             console.log(error);
-            toast.error(error.response.data.message);
+            toast.error(error.response?.data?.message || 'Lỗi đăng ký');
         } finally {
             dispatch(setLoading(false));
         }
-    }
+    };
 
     useEffect(() => {
         if (user) {
@@ -73,59 +84,35 @@ const Signup = () => {
         <div className="bg-gray-50 min-h-screen">
             <Navbar />
             <div className='flex items-center justify-center max-w-7xl mx-auto p-4'>
-                <form onSubmit={submitHandler} className='w-full md:w-1/2 lg:w-1/3 bg-white p-8 rounded-lg shadow-lg'>
+                <form onSubmit={handleSubmit(onSubmit)} className='w-full md:w-1/2 lg:w-1/3 bg-white p-8 rounded-lg shadow-lg'>
                     <h1 className='font-bold text-2xl mb-6 text-center text-[#7209b7]'>Đăng ký</h1>
 
                     {/* Fullname */}
                     <div className='my-3'>
                         <Label>Họ và Tên</Label>
-                        <Input
-                            type="text"
-                            value={input.fullname}
-                            name="fullname"
-                            onChange={changeEventHandler}
-                            placeholder="Nguyễn Văn Tèo"
-                            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                        <Input {...register("fullname")} placeholder="Nguyễn Văn Tèo" />
+                        {errors.fullname && <p className="text-red-500 text-sm mt-1">{errors.fullname.message}</p>}
                     </div>
 
                     {/* Email */}
                     <div className='my-3'>
                         <Label>Email</Label>
-                        <Input
-                            type="email"
-                            value={input.email}
-                            name="email"
-                            onChange={changeEventHandler}
-                            placeholder="teonguyen@gmail.com"
-                            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                        <Input {...register("email")} placeholder="teonguyen@gmail.com" />
+                        {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email.message}</p>}
                     </div>
 
                     {/* Phone Number */}
                     <div className='my-3'>
                         <Label>Số điện thoại</Label>
-                        <Input
-                            type="text"
-                            value={input.phoneNumber}
-                            name="phoneNumber"
-                            onChange={changeEventHandler}
-                            placeholder="8080808080"
-                            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                        <Input {...register("phoneNumber")} placeholder="8080808080" />
+                        {errors.phoneNumber && <p className="text-red-500 text-sm mt-1">{errors.phoneNumber.message}</p>}
                     </div>
 
                     {/* Password */}
                     <div className='my-3'>
                         <Label>Mật khẩu</Label>
-                        <Input
-                            type="password"
-                            value={input.password}
-                            name="password"
-                            onChange={changeEventHandler}
-                            placeholder="********"
-                            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500"
-                        />
+                        <Input type="password" {...register("password")} placeholder="********" />
+                        {errors.password && <p className="text-red-500 text-sm mt-1">{errors.password.message}</p>}
                     </div>
 
                     {/* Role */}
@@ -135,37 +122,30 @@ const Signup = () => {
                             <div className="flex items-center space-x-2">
                                 <Input
                                     type="radio"
-                                    name="role"
                                     value="student"
-                                    checked={input.role === 'student'}
-                                    onChange={changeEventHandler}
-                                    className="cursor-pointer"
+                                    {...register("role")}
+                                    checked={watch('role') === 'student'}
                                 />
-                                <Label htmlFor="r1">Sinh viên</Label>
+                                <Label>Sinh viên</Label>
                             </div>
                             <div className="flex items-center space-x-2">
                                 <Input
                                     type="radio"
-                                    name="role"
                                     value="recruiter"
-                                    checked={input.role === 'recruiter'}
-                                    onChange={changeEventHandler}
-                                    className="cursor-pointer"
+                                    {...register("role")}
+                                    checked={watch('role') === 'recruiter'}
                                 />
-                                <Label htmlFor="r2">Nhà tuyển dụng</Label>
+                                <Label>Nhà tuyển dụng</Label>
                             </div>
                         </RadioGroup>
+                        {errors.role && <p className="text-red-500 text-sm mt-1">{errors.role.message}</p>}
                     </div>
 
                     {/* Avatar Upload */}
                     <div className='my-3'>
                         <Label>Ảnh đại diện</Label>
-                        <Input
-                            accept="image/*"
-                            type="file"
-                            onChange={changeFileHandler}
-                            className="w-full p-3 border border-gray-300 rounded-md cursor-pointer"
-                        />
+                        <Input type="file" accept="image/*" {...register("file")} />
+                        {errors.file && <p className="text-red-500 text-sm mt-1">{errors.file.message}</p>}
                     </div>
 
                     {/* Submit Button */}
