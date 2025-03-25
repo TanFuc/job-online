@@ -23,7 +23,26 @@ const CompanySetup = () => {
     });
     const { singleCompany } = useSelector(store => store.company);
     const [loading, setLoading] = useState(false);
+    const [errors, setErrors] = useState({});
     const navigate = useNavigate();
+
+    const validate = () => {
+        let errors = {};
+        if (!input.name.trim()) errors.name = "Tên công ty không được để trống.";
+        if (!input.description.trim()) errors.description = "Mô tả không được để trống.";
+        if (!input.website.trim()) errors.website = "Website không được để trống.";
+        if (!input.location.trim()) errors.location = "Vị trí không được để trống.";
+        if (!input.file) {
+            errors.file = "Vui lòng tải lên logo công ty.";
+        } else {
+            const allowedTypes = ["image/png", "image/jpeg", "image/jpg", "image/webp"];
+            if (!allowedTypes.includes(input.file.type)) {
+                errors.file = "Chỉ chấp nhận định dạng ảnh (PNG, JPG, JPEG, WEBP).";
+            }
+        }
+        setErrors(errors);
+        return Object.keys(errors).length === 0;
+    };
 
     const changeEventHandler = (e) => {
         setInput({ ...input, [e.target.name]: e.target.value });
@@ -36,14 +55,15 @@ const CompanySetup = () => {
 
     const submitHandler = async (e) => {
         e.preventDefault();
+        if (!validate()) return;
+
         const formData = new FormData();
         formData.append("name", input.name);
         formData.append("description", input.description);
         formData.append("website", input.website);
         formData.append("location", input.location);
-        if (input.file) {
-            formData.append("file", input.file);
-        }
+        formData.append("file", input.file);
+
         try {
             setLoading(true);
             const res = await axios.put(`${COMPANY_API_END_POINT}/update/${params.id}`, formData, {
@@ -58,7 +78,7 @@ const CompanySetup = () => {
             }
         } catch (error) {
             console.log(error);
-            toast.error(error.response.data.message);
+            toast.error(error.response?.data?.message || "Có lỗi xảy ra!");
         } finally {
             setLoading(false);
         }
@@ -70,8 +90,8 @@ const CompanySetup = () => {
             description: singleCompany.description || "",
             website: singleCompany.website || "",
             location: singleCompany.location || "",
-            file: singleCompany.file || null
-        })
+            file: null
+        });
     }, [singleCompany]);
 
     return (
@@ -95,6 +115,7 @@ const CompanySetup = () => {
                                 value={input.name}
                                 onChange={changeEventHandler}
                             />
+                            {errors.name && <p className="text-red-500 text-sm">{errors.name}</p>}
                         </div>
                         <div>
                             <Label>Mô tả</Label>
@@ -104,6 +125,7 @@ const CompanySetup = () => {
                                 value={input.description}
                                 onChange={changeEventHandler}
                             />
+                            {errors.description && <p className="text-red-500 text-sm">{errors.description}</p>}
                         </div>
                         <div>
                             <Label>Website</Label>
@@ -113,6 +135,7 @@ const CompanySetup = () => {
                                 value={input.website}
                                 onChange={changeEventHandler}
                             />
+                            {errors.website && <p className="text-red-500 text-sm">{errors.website}</p>}
                         </div>
                         <div>
                             <Label>Vị trí</Label>
@@ -122,6 +145,7 @@ const CompanySetup = () => {
                                 value={input.location}
                                 onChange={changeEventHandler}
                             />
+                            {errors.location && <p className="text-red-500 text-sm">{errors.location}</p>}
                         </div>
                         <div>
                             <Label>Logo</Label>
@@ -130,15 +154,22 @@ const CompanySetup = () => {
                                 accept="image/*"
                                 onChange={changeFileHandler}
                             />
+                            {errors.file && <p className="text-red-500 text-sm">{errors.file}</p>}
                         </div>
                     </div>
                     {
-                        loading ? <Button className="w-full my-4"> <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Vui lòng đợi </Button> : <Button type="submit" className="w-full my-4">Cập nhật</Button>
+                        loading ? (
+                            <Button className="w-full my-4">
+                                <Loader2 className='mr-2 h-4 w-4 animate-spin' /> Vui lòng đợi
+                            </Button>
+                        ) : (
+                            <Button type="submit" className="w-full my-4">Cập nhật</Button>
+                        )
                     }
                 </form>
             </div>
         </div>
-    )
+    );
 }
 
 export default CompanySetup;

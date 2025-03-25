@@ -1,5 +1,3 @@
-
-
 import React, { useState } from 'react'
 import Navbar from '../shared/Navbar'
 import { Label } from '../ui/label'
@@ -44,31 +42,79 @@ const PostJob = () => {
 
     const { companies } = useSelector(store => store.company);
 
+    // const changeEventHandler = (e) => {
+    //     setInput({ ...input, [e.target.name]: e.target.value });
+    // };
+
     const changeEventHandler = (e) => {
-        setInput({ ...input, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+    
+        if (name === "salary") {
+            // Kiểm tra nếu không phải số hoặc số âm thì không cập nhật
+            if (!/^\d*$/.test(value)) {
+                toast.error("Lương phải là một số.");
+                return;
+            }
+        }
+    
+        setInput({ ...input, [name]: value });
     };
+    
 
     const selectCompanyHandler = (value) => {
         const selectedCompany = companies.find((company) => company.name.toLowerCase() === value);
         setInput({ ...input, companyId: selectedCompany._id });
     };
 
+    // const submitHandler = async (e) => {
+    //     e.preventDefault();
+
+    //     // Validate dữ liệu trước khi submit
+    //     if (!input.title || !input.description || !input.requirements || !input.salary ||
+    //         !input.location || !input.jobType || !input.experience || input.position <= 0 || !input.companyId) {
+    //         toast.error("Vui lòng điền đầy đủ thông tin hợp lệ.");
+    //         return;
+    //     }
+    //     try {
+    //         setLoading(true);
+    //         const res = await axios.post(`${JOB_API_END_POINT}/post`, input, {
+    //             headers: { 'Content-Type': 'application/json' },
+    //             withCredentials: true
+    //         });
+    //         if (res.data.success) {
+    //             toast.success(res.data.message);
+    //             navigate("/admin/jobs");
+    //         }
+    //     } catch (error) {
+    //         toast.error(error.response?.data?.message || "Lỗi đăng công việc.");
+    //     } finally {
+    //         setLoading(false);
+    //     }
+    // };
+
     const submitHandler = async (e) => {
         e.preventDefault();
-
-        // Validate dữ liệu trước khi submit
+    
+        // Kiểm tra dữ liệu nhập vào
         if (!input.title || !input.description || !input.requirements || !input.salary ||
             !input.location || !input.jobType || !input.experience || input.position <= 0 || !input.companyId) {
             toast.error("Vui lòng điền đầy đủ thông tin hợp lệ.");
             return;
         }
-
+    
+        // Kiểm tra lương phải là số hợp lệ
+        if (isNaN(input.salary) || Number(input.salary) <= 0) {
+            toast.error("Lương phải là một số và lớn hơn 0.");
+            return;
+        }
+    
         try {
             setLoading(true);
             const res = await axios.post(`${JOB_API_END_POINT}/post`, input, {
                 headers: { 'Content-Type': 'application/json' },
                 withCredentials: true
             });
+    
             if (res.data.success) {
                 toast.success(res.data.message);
                 navigate("/admin/jobs");
@@ -79,6 +125,7 @@ const PostJob = () => {
             setLoading(false);
         }
     };
+    
 
     return (
         <div>

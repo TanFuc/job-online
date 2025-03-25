@@ -1,14 +1,15 @@
-import React, { useEffect, useState } from 'react';
-import { RadioGroup, RadioGroupItem } from './ui/radio-group';
-import { Label } from './ui/label';
-import { useDispatch } from 'react-redux';
-import { setSearchedQuery } from '@/redux/jobSlice';
+import React, { useEffect, useState } from "react";
+import { RadioGroup, RadioGroupItem } from "./ui/radio-group";
+import { Label } from "./ui/label";
+import { Button } from "./ui/button";
+import { useDispatch } from "react-redux";
+import { setSearchedQuery } from "@/redux/jobSlice";
 
 const filterData = [
     {
         filterType: "location",
         title: "Vị trí",
-        array: ["Hồ Chí Minh", "Hà Nội", "Đà Nẵng"]
+        array: ["Hồ Chí Minh", "Hà Nội", "Đà Nẵng", "Cần Thơ", "Hải Phòng"]
     },
     {
         filterType: "field",
@@ -28,6 +29,10 @@ const FilterCard = () => {
     const changeHandler = (value, type) => {
         const updatedValues = { ...selectedValues, [type]: value };
         setSelectedValues(updatedValues);
+    };
+
+    const resetFilters = () => {
+        setSelectedValues({ location: "", field: "" });
     };
 
     useEffect(() => {
@@ -69,6 +74,14 @@ const FilterCard = () => {
                     </RadioGroup>
                 ))
             }
+
+            {/* Nút Xóa bộ lọc */}
+            <Button
+                onClick={resetFilters}
+                className="w-full mt-4 bg-red-500 text-white hover:bg-red-600 transition-all"
+            >
+                Xóa bộ lọc
+            </Button>
         </div>
     );
 };
